@@ -1,7 +1,7 @@
 package softlinePayment
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,23 +24,42 @@ func New(config *Config) *Service {
 	}
 }
 
-func (s *Service) Auth(ctx context.Context) (response *AuthResp, err error) {
+func (s *Service) Auth() (response *AuthResp, err error) {
 	response = new(AuthResp)
+
+	// отправка в SOM
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(AuthReq{
+		Username: s.config.Login,
+		Password: s.config.Pass,
+	}); err != nil {
+		err = fmt.Errorf("can't encode request: %s", err)
+		return
+	}
 
 	inputs := SendParams{
 		Path:       auth,
 		HttpMethod: http.MethodPost,
 		Response:   response,
+		Body:       body,
 	}
 
-	if _, err = sendRequest(s.config, inputs); err != nil {
+	if _, err = sendRequest(s.config, &inputs); err != nil {
 		return
 	}
+
+	response.Date = inputs.Date
 
 	return
 }
 
-func sendRequest(config *Config, inputs SendParams) (respBody []byte, err error) {
+func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("softline! SendRequest: %v", err)
+		}
+	}()
+
 	baseURL, err := url.Parse(config.URI)
 	if err != nil {
 		return respBody, fmt.Errorf("can't parse URI from config: %w", err)
@@ -60,7 +79,7 @@ func sendRequest(config *Config, inputs SendParams) (respBody []byte, err error)
 
 	req, err := http.NewRequest(inputs.HttpMethod, finalUrl, inputs.Body)
 	if err != nil {
-		return respBody, fmt.Errorf("can't create request for Softline payment system! Err: %s", err)
+		return respBody, fmt.Errorf("can't create request! Err: %s", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -88,8 +107,10 @@ func sendRequest(config *Config, inputs SendParams) (respBody []byte, err error)
 		return respBody, fmt.Errorf("error: %v", string(respBody))
 	}
 
+	inputs.Date = resp.Header.Get("date")
+
 	if err = json.Unmarshal(respBody, &inputs.Response); err != nil {
-		return respBody, fmt.Errorf("can't unmarshall SomPayments resp: '%v'. Err: %w", string(respBody), err)
+		return respBody, fmt.Errorf("can't unmarshall response: '%v'. Err: %w", string(respBody), err)
 	}
 
 	return
