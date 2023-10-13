@@ -15,7 +15,8 @@ type Service struct {
 }
 
 const (
-	auth = "/v1/login_check"
+	auth          = "/v1/login_check"
+	createPayment = "/v1/payment"
 )
 
 func New(config *Config) *Service {
@@ -85,6 +86,10 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json")
 
+	if inputs.AuthNeed {
+		req.Header.Set("AuthorizationJWT", fmt.Sprintf("Bearer %v", inputs.Token))
+	}
+
 	httpClient := http.Client{
 		Transport: &http.Transport{
 			IdleConnTimeout: time.Second * time.Duration(config.IdleConnTimeoutSec),
@@ -111,6 +116,32 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 
 	if err = json.Unmarshal(respBody, &inputs.Response); err != nil {
 		return respBody, fmt.Errorf("can't unmarshall response: '%v'. Err: %w", string(respBody), err)
+	}
+
+	return
+}
+
+func (s *Service) CreatePayment(data CreatePaymentReq, token string) (respBody []byte, response *CreatePaymentResp, err error) {
+	response = new(CreatePaymentResp)
+
+	// отправка в SOM
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(data); err != nil {
+		err = fmt.Errorf("can't encode request: %s", err)
+		return
+	}
+
+	inputs := SendParams{
+		Path:       createPayment,
+		HttpMethod: http.MethodPost,
+		Token:      token,
+		AuthNeed:   true,
+		Response:   response,
+		Body:       body,
+	}
+
+	if respBody, err = sendRequest(s.config, &inputs); err != nil {
+		return
 	}
 
 	return
