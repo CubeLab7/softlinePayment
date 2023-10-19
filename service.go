@@ -17,6 +17,7 @@ type Service struct {
 const (
 	auth          = "/v1/login_check"
 	createPayment = "/v1/payment"
+	makePayment   = "/v1/payment/recurring"
 )
 
 func New(config *Config) *Service {
@@ -137,6 +138,32 @@ func (s *Service) CreatePayment(data CreatePaymentReq, token string) (respBody [
 		Token:      token,
 		AuthNeed:   true,
 		Response:   response,
+		Body:       body,
+	}
+
+	if respBody, err = sendRequest(s.config, &inputs); err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *Service) MakePayment(data MakePaymentReq, token string) (respBody []byte, response *CreatePaymentResp, err error) {
+	response = new(CreatePaymentResp)
+
+	// отправка в SOM
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(data); err != nil {
+		err = fmt.Errorf("can't encode request: %s", err)
+		return
+	}
+
+	inputs := SendParams{
+		Path:       makePayment,
+		HttpMethod: http.MethodPost,
+		Token:      token,
+		Response:   response,
+		AuthNeed:   true,
 		Body:       body,
 	}
 

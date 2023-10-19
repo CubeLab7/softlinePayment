@@ -44,3 +44,11 @@ type CreatePaymentResp struct {
 	PaymentUrl string `json:"payment_url"`
 	OrderId    int    `json:"order_id"`
 }
+
+type MakePaymentReq struct {
+	ParentOrderId      int    `json:"parent_order_id"`
+	PaymentId          string `json:"payment_id"`
+	Currency           string `json:"currency"`
+	Amount             string `json:"amount"`
+	PaymentDescription string `json:"payment_description"`
+}
