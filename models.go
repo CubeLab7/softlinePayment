@@ -52,3 +52,13 @@ type MakePaymentReq struct {
 	Amount             string `json:"amount"`
 	PaymentDescription string `json:"payment_description"`
 }
+
+type Signature struct {
+	SecretKey     string
+	Event         string
+	OrderID       string
+	CreateDate    string
+	PaymentMethod string
+	Currency      string
+	CustomerEmail string
+}

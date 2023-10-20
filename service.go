@@ -2,6 +2,8 @@ package softlinePayment
 
 import (
 	"bytes"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -172,4 +174,16 @@ func (s *Service) MakePayment(data MakePaymentReq, token string) (respBody []byt
 	}
 
 	return
+}
+
+func (s *Service) GenerateSignature(params Signature) string {
+	message := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s", params.SecretKey, params.Event, params.OrderID,
+		params.CreateDate, params.PaymentMethod, params.Currency, params.CustomerEmail)
+	hash := sha512.Sum512([]byte(message))
+	return hex.EncodeToString(hash[:])
+}
+
+func (s *Service) VerifySignature(signature string, params Signature) bool {
+	expectedSignature := s.GenerateSignature(params)
+	return signature == expectedSignature
 }
