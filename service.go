@@ -20,6 +20,7 @@ const (
 	auth          = "/v1/login_check"
 	createPayment = "/v1/payment"
 	makePayment   = "/v1/payment/recurring"
+	getPayment    = "v1/order/"
 )
 
 func New(config *Config) *Service {
@@ -127,7 +128,6 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 func (s *Service) CreatePayment(data CreatePaymentReq, token string) (respBody []byte, response *CreatePaymentResp, err error) {
 	response = new(CreatePaymentResp)
 
-	// отправка в SOM
 	body := new(bytes.Buffer)
 	if err = json.NewEncoder(body).Encode(data); err != nil {
 		err = fmt.Errorf("can't encode request: %s", err)
@@ -153,7 +153,6 @@ func (s *Service) CreatePayment(data CreatePaymentReq, token string) (respBody [
 func (s *Service) MakePayment(data MakePaymentReq, token string) (respBody []byte, response *CreatePaymentResp, err error) {
 	response = new(CreatePaymentResp)
 
-	// отправка в SOM
 	body := new(bytes.Buffer)
 	if err = json.NewEncoder(body).Encode(data); err != nil {
 		err = fmt.Errorf("can't encode request: %s", err)
@@ -186,4 +185,22 @@ func (s *Service) GenerateSignature(params Signature) string {
 func (s *Service) VerifySignature(signature string, params Signature) bool {
 	expectedSignature := s.GenerateSignature(params)
 	return signature == expectedSignature
+}
+
+func (s *Service) PostCheck(orderID string, token string) (respBody []byte, response *PaymentResp, err error) {
+	response = new(PaymentResp)
+
+	inputs := SendParams{
+		Path:       fmt.Sprintf("%v%v", getPayment, orderID),
+		HttpMethod: http.MethodGet,
+		Token:      token,
+		AuthNeed:   true,
+		Response:   response,
+	}
+
+	if respBody, err = sendRequest(s.config, &inputs); err != nil {
+		return
+	}
+
+	return
 }
