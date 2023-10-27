@@ -112,7 +112,7 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 		return respBody, fmt.Errorf("can't read response body! Err: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusInternalServerError {
 		return respBody, fmt.Errorf("error: %v", string(respBody))
 	}
 
