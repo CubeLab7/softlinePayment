@@ -112,7 +112,7 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 		return respBody, fmt.Errorf("can't read response body! Err: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusInternalServerError {
 		return respBody, fmt.Errorf("error: %v", string(respBody))
 	}
 
@@ -121,7 +121,6 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 	if err = json.Unmarshal(respBody, &inputs.Response); err != nil {
 		return respBody, fmt.Errorf("can't unmarshall response: '%v'. Err: %w", string(respBody), err)
 	}
-
 	return
 }
 
@@ -147,6 +146,10 @@ func (s *Service) CreatePayment(data CreatePaymentReq, token string) (respBody [
 		return
 	}
 
+	if response.Errors != nil {
+		err = fmt.Errorf(string(respBody))
+	}
+
 	return
 }
 
@@ -170,6 +173,10 @@ func (s *Service) MakePayment(data MakePaymentReq, token string) (respBody []byt
 
 	if respBody, err = sendRequest(s.config, &inputs); err != nil {
 		return
+	}
+
+	if response.Errors != nil {
+		err = fmt.Errorf(string(respBody))
 	}
 
 	return
@@ -200,6 +207,10 @@ func (s *Service) PostCheck(orderID string, token string) (respBody []byte, resp
 
 	if respBody, err = sendRequest(s.config, &inputs); err != nil {
 		return
+	}
+
+	if response.Errors != nil {
+		err = fmt.Errorf(string(respBody))
 	}
 
 	return

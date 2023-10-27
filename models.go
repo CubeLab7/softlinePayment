@@ -44,8 +44,14 @@ type Customer struct {
 }
 
 type CreatePaymentResp struct {
-	PaymentUrl string `json:"payment_url"`
-	OrderId    int    `json:"order_id"`
+	PaymentUrl string  `json:"payment_url,omitempty"`
+	OrderId    int     `json:"order_id"`
+	Errors     []Error `json:"errors,omitempty"`
+}
+
+type Error struct {
+	Error   int    `json:"error"`
+	Message string `json:"message"`
 }
 
 type MakePaymentReq struct {
@@ -101,4 +107,5 @@ type PaymentResp struct {
 		Reason string    `json:"reason"`
 		Date   time.Time `json:"date"`
 	} `json:"return"`
+	Errors []Error `json:"errors"`
 }
