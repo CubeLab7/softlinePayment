@@ -21,6 +21,7 @@ const (
 	createPayment = "/v1/payment"
 	makePayment   = "/v1/payment/recurring"
 	getPayment    = "v1/order/"
+	refund        = "/v1/order/%s/refund"
 )
 
 func New(config *Config) *Service {
@@ -106,6 +107,8 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 		return respBody, fmt.Errorf("can't do request! Err: %s", err)
 	}
 	defer resp.Body.Close()
+
+	inputs.HttpCode = resp.StatusCode
 
 	respBody, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -202,4 +205,29 @@ func (s *Service) PostCheck(orderID string, token string) (respBody []byte, resp
 	}
 
 	return
+}
+
+func (s *Service) Refund(request RefundReq, token string) (response *PaymentResp, err error) {
+	response = new(PaymentResp)
+
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(request); err != nil {
+		err = fmt.Errorf("can't encode request: %s", err)
+		return
+	}
+
+	inputs := SendParams{
+		Path:       fmt.Sprintf(refund, request.OrderID),
+		HttpMethod: http.MethodPost,
+		Token:      token,
+		AuthNeed:   true,
+		Body:       body,
+		Response:   response,
+	}
+
+	if _, err = sendRequest(s.config, &inputs); err != nil && inputs.HttpCode != http.StatusOK {
+		return
+	}
+
+	return response, nil
 }

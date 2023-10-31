@@ -6,6 +6,7 @@ import (
 )
 
 type SendParams struct {
+	HttpCode    int
 	Path        string
 	HttpMethod  string
 	Date        string
@@ -108,4 +109,10 @@ type PaymentResp struct {
 		Date   time.Time `json:"date"`
 	} `json:"return"`
 	Errors []Error `json:"errors"`
+}
+
+type RefundReq struct {
+	OrderID     string `json:"-"`
+	Email       string `json:"email"`
+	Description string `json:"description"`
 }
