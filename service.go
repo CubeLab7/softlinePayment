@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -82,6 +83,8 @@ func sendRequest(config *Config, inputs *SendParams) (respBody []byte, err error
 	baseURL.RawQuery = query.Encode()
 
 	finalUrl := baseURL.String()
+
+	log.Println("url: ", finalUrl)
 
 	req, err := http.NewRequest(inputs.HttpMethod, finalUrl, inputs.Body)
 	if err != nil {
