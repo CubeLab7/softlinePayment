@@ -35,6 +35,7 @@ type CreatePaymentReq struct {
 	PaymentMethod      string   `json:"payment_method"`
 	RecurringIndicator bool     `json:"recurring_indicator"`
 	PaymentId          string   `json:"payment_id"`
+	PaymentDescription string   `json:"payment_description"`
 	Customer           Customer `json:"customer"`
 }
 
