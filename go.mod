@@ -1,3 +1,3 @@
-module github.com/dwnGnL/softlinePayment
+module github.com/CubeLab7/softlinePayment
 
 go 1.20
